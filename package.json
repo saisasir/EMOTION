@@ -4,12 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "build:dev": "vite build --mode development",
-    "lint": "eslint .",
-    "preview": "vite preview",
-    "start": "vite preview"
+    "dev": "vite",               // For local development
+    "build": "vite build",       // For building the project
+    "build:dev": "vite build --mode development",  // For building in development mode
+    "lint": "eslint .",          // For linting
+    "preview": "vite preview",   // To preview the production build
+    "start": "vite preview"      // To start the app after build in production mode
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -49,7 +49,6 @@
     "input-otp": "^1.2.4",
     "lucide-react": "^0.462.0",
     "next-themes": "^0.3.0",
-    "path": "^0.12.7",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",
