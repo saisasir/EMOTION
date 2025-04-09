@@ -14,9 +14,8 @@ from pydub import AudioSegment  # For webm to wav conversion
 SAMPLE_RATE = 16000
 MAX_TIME = 256
 
-# Load model and label encoder paths from environment variables
-MODEL_PATH = os.getenv('MODEL_PATH', 'default_model_path')  # Default path for local testing
-LABEL_ENCODER_PATH = os.getenv('LABEL_ENCODER_PATH', 'default_label_encoder_path')  # Default path for local testing
+MODEL_PATH = os.getenv('MODEL_PATH', './models/cnn_transformer_ser.pt')  # Correct model path
+LABEL_ENCODER_PATH = os.getenv('LABEL_ENCODER_PATH', './models/label_encoder.npy')  # Correct label encoder path
 
 # ---------------- Flask Setup ----------------
 app = Flask(__name__)
