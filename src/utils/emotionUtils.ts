@@ -96,7 +96,8 @@ export const getEmotionResponse = (emotion: string): EmotionResponse => {
 };
 
 // Backend API URL - Update with your deployed backend URL
-export const API_URL = "https://emotion-wc2d.onrender.com"; // Replace this with your actual Render backend URL
+export const API_URL = import.meta.env.VITE_API_BASE_URL;
+ // Replace this with your actual Render backend URL
 
 // Real prediction function that calls the backend API
 export const predictEmotion = async (audio: Blob): Promise<EmotionResult> => {
