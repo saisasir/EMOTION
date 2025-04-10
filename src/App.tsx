@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,10 +7,10 @@ import React from "react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
-function App() {
-  // Create a client
-  const queryClient = new QueryClient();
+// ✅ Move query client outside function
+const queryClient = new QueryClient();
 
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

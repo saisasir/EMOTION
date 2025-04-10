@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -23,92 +22,106 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({ onAudioReady, isProcessin
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setAudioStream(stream);
-      
+
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
-      
+
       mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) {
           audioChunksRef.current.push(e.data);
         }
       };
-      
+
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         onAudioReady(audioBlob);
-        
-        // Stop all tracks on the stream
+
+        // 🔊 Optional playback preview
+        // const url = URL.createObjectURL(audioBlob);
+        // new Audio(url).play();
+
         stream.getTracks().forEach(track => track.stop());
         setAudioStream(null);
       };
-      
+
       mediaRecorder.start();
       setIsRecording(true);
       setRecordingTime(0);
-      
-      // Start timer
+
       timerRef.current = setInterval(() => {
         setRecordingTime(prev => prev + 1);
       }, 1000);
-      
+
     } catch (error) {
       console.error('Error accessing microphone:', error);
       toast.error('Could not access your microphone. Please check permissions.');
     }
   };
-  
+
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
-      
+
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
     }
   };
-  
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    
+
     if (file) {
       if (file.type.startsWith('audio/')) {
         const reader = new FileReader();
+
         reader.onload = () => {
-          const blob = new Blob([reader.result as ArrayBuffer], { type: file.type });
-          onAudioReady(blob);
+          try {
+            const blob = new Blob([reader.result as ArrayBuffer], { type: 'audio/webm' });
+            onAudioReady(blob);
+
+            // 🔊 Optional playback preview
+            // const url = URL.createObjectURL(blob);
+            // new Audio(url).play();
+          } catch (err) {
+            console.error("❌ Error processing uploaded audio:", err);
+            toast.error("Failed to process uploaded audio.");
+          }
         };
+
+        reader.onerror = () => {
+          toast.error('Failed to read the uploaded file.');
+        };
+
         reader.readAsArrayBuffer(file);
       } else {
-        toast.error('Please upload an audio file.');
+        toast.error('Please upload a valid audio file.');
       }
     }
   };
-  
+
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
-  
+
   useEffect(() => {
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-      
+      if (timerRef.current) clearInterval(timerRef.current);
       if (audioStream) {
         audioStream.getTracks().forEach(track => track.stop());
       }
     };
   }, [audioStream]);
-  
+
   return (
     <div className="w-full space-y-4">
       <AudioVisualizer isRecording={isRecording} audioStream={audioStream} />
-      
+
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           {isRecording ? (
@@ -131,7 +144,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({ onAudioReady, isProcessin
               <Mic className="h-6 w-6" />
             </Button>
           )}
-          
+
           <div className="text-sm font-medium">
             {isRecording ? (
               <div className="flex items-center">
@@ -143,17 +156,17 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({ onAudioReady, isProcessin
             )}
           </div>
         </div>
-        
+
         <div>
-          <input 
-            type="file" 
+          <input
+            type="file"
             ref={fileInputRef}
             onChange={handleFileUpload}
             accept="audio/*"
-            className="hidden" 
+            className="hidden"
             disabled={isProcessing || isRecording}
           />
-          
+
           <Button
             variant="outline"
             onClick={() => fileInputRef.current?.click()}

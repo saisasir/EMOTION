@@ -8,19 +8,17 @@ from gtts import gTTS
 import base64
 import tempfile
 from sklearn.preprocessing import LabelEncoder
-from pydub import AudioSegment  # For webm to wav conversion
+from pydub import AudioSegment
 
 # ---------------- Configuration ----------------
 SAMPLE_RATE = 16000
 MAX_TIME = 256
-
-MODEL_PATH = os.getenv('MODEL_PATH', './models/cnn_transformer_ser.pt')  # Correct model path
-LABEL_ENCODER_PATH = os.getenv('LABEL_ENCODER_PATH', './models/label_encoder.npy')  # Correct label encoder path
+MODEL_PATH = os.getenv('MODEL_PATH', './models/cnn_transformer_ser.pt')
+LABEL_ENCODER_PATH = os.getenv('LABEL_ENCODER_PATH', './models/label_encoder.npy')
 
 # ---------------- Flask Setup ----------------
 app = Flask(__name__)
 CORS(app, origins="*")
-  # Enable CORS for all routes
 
 # ---------------- Model Definition ----------------
 class PositionalEncoding(torch.nn.Module):
@@ -68,15 +66,22 @@ class CNNTransformer(torch.nn.Module):
         x = self.transformer(x)
         return self.classifier(x.squeeze(1))
 
-# ---------------- Load Model ----------------
+# ---------------- Lazy Load Model ----------------
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 label_classes = np.load(LABEL_ENCODER_PATH, allow_pickle=True)
 label_encoder = LabelEncoder()
 label_encoder.classes_ = label_classes
 input_dim = 40 + 40 + 40 + 128 + 1 + 1 + 1
-model = CNNTransformer(input_dim=input_dim, num_classes=len(label_classes)).to(device)
-model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
-model.eval()
+model = None
+
+def load_model_once():
+    global model
+    if model is None:
+        print("🔁 Loading model for the first time...")
+        m = CNNTransformer(input_dim=input_dim, num_classes=len(label_classes)).to(device)
+        m.load_state_dict(torch.load(MODEL_PATH, map_location=device))
+        m.eval()
+        model = m
 
 # ---------------- Utilities ----------------
 def extract_features(y, sr):
@@ -89,14 +94,12 @@ def extract_features(y, sr):
     zcr = librosa.feature.zero_crossing_rate(y)
     rmse = librosa.feature.rms(y=y)
     rolloff = librosa.feature.spectral_rolloff(y=y, sr=sr)
-
     features = np.concatenate([mfcc, delta, delta2, mel_db, zcr, rmse, rolloff], axis=0)
     if features.shape[1] < MAX_TIME:
         pad = MAX_TIME - features.shape[1]
         features = np.pad(features, ((0, 0), (0, pad)), mode='constant')
     else:
         features = features[:, :MAX_TIME]
-
     return features
 
 def generate_response_text(emotion):
@@ -132,12 +135,12 @@ def home():
 @app.route('/predict-emotion', methods=['POST'])
 def predict_emotion():
     try:
+        load_model_once()
         audio_file = request.files['audio_file']
         temp_audio_path = "temp_audio.webm"
         audio_file.save(temp_audio_path)
 
-        AudioSegment.converter = "ffmpeg"  # Only needed if ffmpeg isn't already in PATH
-
+        AudioSegment.converter = "ffmpeg"
         try:
             sound = AudioSegment.from_file(temp_audio_path)
             temp_wav_path = "converted.wav"

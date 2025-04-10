@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { EmotionResult, getEmotionColor, getEmotionIcon } from '@/utils/emotionUtils';
 
@@ -51,15 +50,19 @@ const EmotionDisplay: React.FC<EmotionDisplayProps> = ({ result, isLoading }) =>
           <h2 className="text-2xl font-bold mb-2 capitalize">{emotion}</h2>
           <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2">
             <div 
-              className={`h-2.5 rounded-full progress-animation`}
+              className="h-2.5 rounded-full progress-animation"
               style={{ 
                 width: `${confidence}%`,
-                backgroundColor: emotion === 'happy' ? '#FFD166' :
-                               emotion === 'sad' ? '#457B9D' :
-                               emotion === 'angry' ? '#E63946' :
-                               emotion === 'neutral' ? '#A8DADC' :
-                               emotion === 'fear' ? '#8338EC' :
-                               emotion === 'surprised' ? '#3A86FF' : '#6A994E'
+                backgroundColor: (() => {
+                  const e = emotion.toLowerCase();
+                  return e === 'happy' ? '#FFD166' :
+                         e === 'sad' ? '#457B9D' :
+                         e === 'angry' ? '#E63946' :
+                         e === 'neutral' ? '#A8DADC' :
+                         e === 'fear' ? '#8338EC' :
+                         e === 'surprised' ? '#3A86FF' :
+                         '#6A994E';
+                })()
               }}
             ></div>
           </div>

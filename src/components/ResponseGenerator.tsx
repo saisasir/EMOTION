@@ -16,17 +16,14 @@ const ResponseGenerator: React.FC<ResponseGeneratorProps> = ({ emotionResult, au
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
+  // Handle the text response
   useEffect(() => {
     if (emotionResult) {
-      if (text) {
-        setResponse(text);
-      } else {
-        const responseData = getEmotionResponse(emotionResult.emotion);
-        setResponse(responseData.text);
-      }
+      setResponse(text ?? getEmotionResponse(emotionResult.emotion).text);
     }
   }, [emotionResult, text]);
 
+  // Handle the base64 audio response
   useEffect(() => {
     if (audioData) {
       try {
@@ -37,19 +34,19 @@ const ResponseGenerator: React.FC<ResponseGeneratorProps> = ({ emotionResult, au
         const newAudio = new Audio(url);
         audioRef.current = newAudio;
 
-        // Use canplaythrough with once: true to safely auto-play only once
         newAudio.addEventListener(
-          "canplaythrough",
+          'canplaythrough',
           () => {
             if (!newAudio.played.length) {
-              newAudio.play()
+              newAudio
+                .play()
                 .then(() => {
-                  console.log("✅ Auto-played AI response");
+                  console.log('✅ Auto-played AI response');
                   setIsPlaying(true);
                 })
                 .catch(() => {
-                  console.warn("⚠️ Auto-play blocked, waiting for user interaction");
-                  toast.warning("Click play to hear the AI response");
+                  console.warn('⚠️ Auto-play blocked by browser');
+                  toast.warning('Click play to hear the AI response');
                 });
             }
           },
@@ -60,42 +57,49 @@ const ResponseGenerator: React.FC<ResponseGeneratorProps> = ({ emotionResult, au
           URL.revokeObjectURL(url);
           newAudio.pause();
           newAudio.src = '';
+          audioRef.current = null;
         };
       } catch (error) {
-        console.error("Error processing audio data:", error);
-        toast.error("Failed to process audio response");
+        console.error('❌ Error processing base64 audio:', error);
+        toast.error('Failed to load audio response');
       }
     }
   }, [audioData]);
 
-  const base64ToBlob = (base64: string, mimeType: string) => {
-    const byteString = atob(base64);
-    const arrayBuffer = new ArrayBuffer(byteString.length);
-    const intArray = new Uint8Array(arrayBuffer.byteLength);
-    for (let i = 0; i < byteString.length; i++) {
-      intArray[i] = byteString.charCodeAt(i);
+  // Convert base64 to Blob
+  const base64ToBlob = (base64: string, mimeType: string): Blob => {
+    try {
+      const byteString = atob(base64);
+      const arrayBuffer = new ArrayBuffer(byteString.length);
+      const intArray = new Uint8Array(arrayBuffer.byteLength);
+      for (let i = 0; i < byteString.length; i++) {
+        intArray[i] = byteString.charCodeAt(i);
+      }
+      return new Blob([intArray], { type: mimeType });
+    } catch (e) {
+      console.error("❌ base64 decode failed", e);
+      throw new Error("Invalid base64 input");
     }
-    return new Blob([intArray], { type: mimeType });
   };
 
+  // Handle play/stop button
   const handlePlayAudio = () => {
     if (!audioUrl) {
-      toast.error("No audio response available");
+      toast.error('No audio response available');
       return;
     }
 
     if (audioRef.current) {
-      console.trace("▶️ handlePlayAudio triggered"); // trace any unexpected triggers
-
       if (isPlaying) {
         audioRef.current.pause();
         setIsPlaying(false);
       } else {
-        audioRef.current.play()
+        audioRef.current
+          .play()
           .then(() => setIsPlaying(true))
-          .catch(err => {
-            console.error("Error playing audio:", err);
-            toast.error("Failed to play audio");
+          .catch((err) => {
+            console.error('❌ Error playing audio:', err);
+            toast.error('Failed to play audio');
           });
       }
     }

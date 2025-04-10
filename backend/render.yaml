@@ -6,4 +6,4 @@ services:
       apt-get update
       apt-get install -y ffmpeg  # Install ffmpeg system-wide
       pip install -r requirements.txt  # Install Python dependencies
-    startCommand: gunicorn --preload --bind 0.0.0.0:5000 --workers 1 --timeout 800 app:app
+    startCommand: gunicorn --preload --bind 0.0.0.0:5000 --workers 1 --timeout 90 app:app
