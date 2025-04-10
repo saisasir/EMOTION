@@ -19,7 +19,7 @@ LABEL_ENCODER_PATH = os.getenv('LABEL_ENCODER_PATH', './models/label_encoder.npy
 
 # ---------------- Flask Setup ----------------
 app = Flask(__name__)
-CORS(app, origins=["https://emotionrender.netlify.app"])
+CORS(app, origins="*")
   # Enable CORS for all routes
 
 # ---------------- Model Definition ----------------
