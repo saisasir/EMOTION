@@ -138,7 +138,7 @@ export const mockPredictEmotion = async (audio: Blob): Promise<EmotionResult> =>
       resolve({
         emotion,
         confidence,
-        audioResponse: mockAudioBase64,
+        audioResponse: "UklGRiQAAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YQAAAAA=",
         text_response: getEmotionResponse(emotion).text // ✅ include mock text response
       });
     }, 2000);
