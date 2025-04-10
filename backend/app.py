@@ -18,7 +18,7 @@ LABEL_ENCODER_PATH = os.getenv('LABEL_ENCODER_PATH', './models/label_encoder.npy
 
 # ---------------- Flask Setup ----------------
 app = Flask(__name__)
-CORS(app, origins=["https://emotionrender.netlify.app"], supports_credentials=True)
+CORS(app, origins=["https://emotionrender.netlify.app"])
 
 @app.after_request
 def after_request(response):
@@ -72,23 +72,17 @@ class CNNTransformer(torch.nn.Module):
         x = self.transformer(x)
         return self.classifier(x.squeeze(1))
 
-# ---------------- Lazy Load ----------------
+# ---------------- Load Model at Startup ----------------
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = None
-label_encoder = None
 
-def load_model_once():
-    global model, label_encoder
-    if model is None or label_encoder is None:
-        print("🔁 Loading model for the first time...")
-        label_classes = np.load(LABEL_ENCODER_PATH, allow_pickle=True)
-        label_encoder = LabelEncoder()
-        label_encoder.classes_ = label_classes
-        input_dim = 40 + 40 + 40 + 128 + 1 + 1 + 1
-        m = CNNTransformer(input_dim=input_dim, num_classes=len(label_classes)).to(device)
-        m.load_state_dict(torch.load(MODEL_PATH, map_location=device))
-        m.eval()
-        model = m
+print("🔁 Loading model and label encoder on startup...")
+label_classes = np.load(LABEL_ENCODER_PATH, allow_pickle=True)
+label_encoder = LabelEncoder()
+label_encoder.classes_ = label_classes
+input_dim = 40 + 40 + 40 + 128 + 1 + 1 + 1
+model = CNNTransformer(input_dim=input_dim, num_classes=len(label_classes)).to(device)
+model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
+model.eval()
 
 # ---------------- Utilities ----------------
 def extract_features(y, sr):
@@ -129,8 +123,7 @@ def text_to_speech(text):
 
     with open(temp_audio_path, "rb") as audio_file:
         audio_binary = audio_file.read()
-        audio_base64 = base64.b64encode(audio_binary).decode("utf-8").replace("\n", "")  # fix multiline base64
-
+        audio_base64 = base64.b64encode(audio_binary).decode("utf-8").replace("\n", "")
     os.remove(temp_audio_path)
     return audio_base64
 
@@ -142,7 +135,6 @@ def home():
 @app.route('/predict-emotion', methods=['POST'])
 def predict_emotion():
     try:
-        load_model_once()
         audio_file = request.files['audio_file']
         temp_audio_path = "temp_audio.webm"
         audio_file.save(temp_audio_path)
@@ -178,6 +170,7 @@ def predict_emotion():
             "text_response": response_text,
             "audio_base64": audio_base64
         })
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
