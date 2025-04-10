@@ -18,7 +18,7 @@ LABEL_ENCODER_PATH = os.getenv('LABEL_ENCODER_PATH', './models/label_encoder.npy
 
 # ---------------- Flask Setup ----------------
 app = Flask(__name__)
-CORS(app, origins="*")
+CORS(app)
 
 # ---------------- Model Definition ----------------
 class PositionalEncoding(torch.nn.Module):
@@ -66,18 +66,19 @@ class CNNTransformer(torch.nn.Module):
         x = self.transformer(x)
         return self.classifier(x.squeeze(1))
 
-# ---------------- Lazy Load Model ----------------
+# ---------------- Lazy Load ----------------
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-label_classes = np.load(LABEL_ENCODER_PATH, allow_pickle=True)
-label_encoder = LabelEncoder()
-label_encoder.classes_ = label_classes
-input_dim = 40 + 40 + 40 + 128 + 1 + 1 + 1
 model = None
+label_encoder = None
 
 def load_model_once():
-    global model
-    if model is None:
+    global model, label_encoder
+    if model is None or label_encoder is None:
         print("🔁 Loading model for the first time...")
+        label_classes = np.load(LABEL_ENCODER_PATH, allow_pickle=True)
+        label_encoder = LabelEncoder()
+        label_encoder.classes_ = label_classes
+        input_dim = 40 + 40 + 40 + 128 + 1 + 1 + 1
         m = CNNTransformer(input_dim=input_dim, num_classes=len(label_classes)).to(device)
         m.load_state_dict(torch.load(MODEL_PATH, map_location=device))
         m.eval()
@@ -152,7 +153,6 @@ def predict_emotion():
             return jsonify({"error": "Failed to convert audio file"}), 400
 
         os.remove(temp_audio_path)
-
         features = extract_features(y, sr)
         features_tensor = torch.tensor(features).float().unsqueeze(0).to(device)
 
