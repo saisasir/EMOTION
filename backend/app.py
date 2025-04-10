@@ -18,7 +18,13 @@ LABEL_ENCODER_PATH = os.getenv('LABEL_ENCODER_PATH', './models/label_encoder.npy
 
 # ---------------- Flask Setup ----------------
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=["https://emotionrender.netlify.app"], supports_credentials=True)
+
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+    return response
 
 # ---------------- Model Definition ----------------
 class PositionalEncoding(torch.nn.Module):
@@ -123,7 +129,7 @@ def text_to_speech(text):
 
     with open(temp_audio_path, "rb") as audio_file:
         audio_binary = audio_file.read()
-        audio_base64 = base64.b64encode(audio_binary).decode("utf-8")
+        audio_base64 = base64.b64encode(audio_binary).decode("utf-8").replace("\n", "")  # fix multiline base64
 
     os.remove(temp_audio_path)
     return audio_base64
