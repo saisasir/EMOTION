@@ -18,21 +18,16 @@ LABEL_ENCODER_PATH = os.getenv('LABEL_ENCODER_PATH', './models/label_encoder.npy
 
 # ---------------- Flask Setup ----------------
 app = Flask(__name__)
-# Allow CORS with proper configuration for production
-CORS(app, resources={
-    r"/*": {
-        "origins": ["https://emotionrender.netlify.app"],
-        "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization", "Origin"]
-    }
-})
+
+# Correct CORS setup
+CORS(app, origins=["https://emotionrender.netlify.app"], supports_credentials=True)
 
 @app.after_request
 def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', 'https://emotionrender.netlify.app')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,Origin')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
-    response.headers.add('Access-Control-Allow-Credentials', 'false')
+    response.headers.set('Access-Control-Allow-Origin', 'https://emotionrender.netlify.app')
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.set('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+    response.headers.set('Access-Control-Allow-Credentials', 'true')
     return response
 
 # ---------------- Model Definition ----------------
@@ -142,10 +137,9 @@ def home():
 
 @app.route('/predict-emotion', methods=['POST', 'OPTIONS'])
 def predict_emotion():
-    # Handle preflight OPTIONS request
     if request.method == 'OPTIONS':
         return '', 204
-        
+
     try:
         audio_file = request.files['audio_file']
         temp_audio_path = "temp_audio.webm"
