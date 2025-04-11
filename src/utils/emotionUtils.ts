@@ -78,6 +78,11 @@ export const predictEmotion = async (audio: Blob): Promise<EmotionResult> => {
     const response = await fetch(`${API_URL}/predict-emotion`, {
       method: 'POST',
       body: formData,
+      headers: {
+        // Don't set Content-Type here as FormData will set it with boundary
+        'Origin': window.location.origin
+      },
+      credentials: 'omit' // Don't send cookies to avoid potential CORS issues
     });
 
     if (!response.ok) {
