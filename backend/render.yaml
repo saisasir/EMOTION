@@ -6,7 +6,9 @@ services:
       apt-get update && apt-get install -y ffmpeg
       pip install --upgrade pip
       pip install -r requirements.txt
-    startCommand: gunicorn --preload --bind 0.0.0.0:5000 --workers 1 --timeout 180 app:app
+    startCommand: |
+      python prestart.py
+      gunicorn --bind 0.0.0.0:5000 --workers 1 --timeout 300 app:app
     envVars:
       - key: MODEL_PATH
         value: ./models/cnn_transformer_ser.pt
