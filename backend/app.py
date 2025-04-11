@@ -4,6 +4,7 @@ import torch
 import numpy as np
 import librosa
 import os
+import gdown
 from gtts import gTTS
 import base64
 import tempfile
@@ -13,13 +14,25 @@ from pydub import AudioSegment
 # ---------------- Configuration ----------------
 SAMPLE_RATE = 16000
 MAX_TIME = 256
-MODEL_PATH = os.getenv('MODEL_PATH', './models/cnn_transformer_ser.pt')
-LABEL_ENCODER_PATH = os.getenv('LABEL_ENCODER_PATH', './models/label_encoder.npy')
+MODEL_PATH = './models/cnn_transformer_ser.pt'
+LABEL_ENCODER_PATH = './models/label_encoder.npy'
+
+GDRIVE_MODEL_ID = '1LorueP9xWUG4dwGAwV2nwVRUqUpNdYvR'  # <- Replace with actual ID
+GDRIVE_LABEL_ID = '1AzmDvf2sQ5nxWBkEFh0g_geEi5Rkmg7w'  # <- Replace with actual ID
+
+def download_if_missing():
+    os.makedirs('models', exist_ok=True)
+    if not os.path.exists(MODEL_PATH):
+        print("⬇️ Downloading model from Google Drive...")
+        gdown.download(f'https://drive.google.com/uc?id={GDRIVE_MODEL_ID}', MODEL_PATH, quiet=False)
+    if not os.path.exists(LABEL_ENCODER_PATH):
+        print("⬇️ Downloading label encoder from Google Drive...")
+        gdown.download(f'https://drive.google.com/uc?id={GDRIVE_LABEL_ID}', LABEL_ENCODER_PATH, quiet=False)
+
+download_if_missing()
 
 # ---------------- Flask Setup ----------------
 app = Flask(__name__)
-
-# Correct CORS setup
 CORS(app, origins=["https://emotionrender.netlify.app"], supports_credentials=True)
 
 @app.after_request
@@ -76,9 +89,9 @@ class CNNTransformer(torch.nn.Module):
         x = self.transformer(x)
         return self.classifier(x.squeeze(1))
 
-# ---------------- Load Model at Startup ----------------
+# ---------------- Load Model ----------------
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print("🔁 Loading model and label encoder on startup...")
+print("🔁 Loading model and label encoder...")
 label_classes = np.load(LABEL_ENCODER_PATH, allow_pickle=True)
 label_encoder = LabelEncoder()
 label_encoder.classes_ = label_classes
