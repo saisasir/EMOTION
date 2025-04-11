@@ -4,7 +4,6 @@ import torch
 import numpy as np
 import librosa
 import os
-import gdown
 from gtts import gTTS
 import base64
 import tempfile
@@ -16,20 +15,6 @@ SAMPLE_RATE = 16000
 MAX_TIME = 256
 MODEL_PATH = './models/cnn_transformer_ser.pt'
 LABEL_ENCODER_PATH = './models/label_encoder.npy'
-
-GDRIVE_MODEL_ID = '1LorueP9xWUG4dwGAwV2nwVRUqUpNdYvR'  # <- Replace with actual ID
-GDRIVE_LABEL_ID = '1AzmDvf2sQ5nxWBkEFh0g_geEi5Rkmg7w'  # <- Replace with actual ID
-
-def download_if_missing():
-    os.makedirs('models', exist_ok=True)
-    if not os.path.exists(MODEL_PATH):
-        print("⬇️ Downloading model from Google Drive...")
-        gdown.download(f'https://drive.google.com/uc?id={GDRIVE_MODEL_ID}', MODEL_PATH, quiet=False)
-    if not os.path.exists(LABEL_ENCODER_PATH):
-        print("⬇️ Downloading label encoder from Google Drive...")
-        gdown.download(f'https://drive.google.com/uc?id={GDRIVE_LABEL_ID}', LABEL_ENCODER_PATH, quiet=False)
-
-download_if_missing()
 
 # ---------------- Flask Setup ----------------
 app = Flask(__name__)
