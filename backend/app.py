@@ -18,6 +18,7 @@ LABEL_ENCODER_PATH = os.getenv('LABEL_ENCODER_PATH', './models/label_encoder.npy
 
 # ---------------- Flask Setup ----------------
 app = Flask(__name__)
+# Allow only your deployed frontend to call this API.
 CORS(app, origins=["https://emotionrender.netlify.app"])
 
 @app.after_request
@@ -74,7 +75,6 @@ class CNNTransformer(torch.nn.Module):
 
 # ---------------- Load Model at Startup ----------------
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 print("🔁 Loading model and label encoder on startup...")
 label_classes = np.load(LABEL_ENCODER_PATH, allow_pickle=True)
 label_encoder = LabelEncoder()
@@ -176,4 +176,5 @@ def predict_emotion():
 
 # ---------------- Run ----------------
 if __name__ == "__main__":
-    app.run(debug=False, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    port = int(os.environ.get("PORT", 5000))
+    app.run(debug=False, host="0.0.0.0", port=port)

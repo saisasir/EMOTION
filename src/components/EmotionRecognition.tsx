@@ -8,14 +8,12 @@ import { toast } from 'sonner';
 const EmotionRecognition: React.FC = () => {
   const [emotionResult, setEmotionResult] = useState<EmotionResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [uploadedAudio, setUploadedAudio] = useState<Blob | null>(null);
   const [responseAudio, setResponseAudio] = useState<string | null>(null);
   const [responseText, setResponseText] = useState<string | null>(null);
 
   const handleAudioReady = async (audioBlob: Blob) => {
     try {
       setIsProcessing(true);
-      setUploadedAudio(audioBlob);
       toast.info('Processing audio...', { duration: 2000 });
 
       const result = await predictEmotion(audioBlob);
@@ -23,7 +21,7 @@ const EmotionRecognition: React.FC = () => {
 
       setEmotionResult(result);
       setResponseAudio(result.audioResponse || null);
-      setResponseText('text_response' in result ? result.text_response : null);
+      setResponseText(result.text_response || null);
 
       toast.success(`Detected emotion: ${result.emotion}`, { duration: 3000 });
     } catch (error) {
@@ -41,13 +39,11 @@ const EmotionRecognition: React.FC = () => {
           <h2 className="text-xl font-semibold mb-4">Record or Upload Audio</h2>
           <AudioRecorder onAudioReady={handleAudioReady} isProcessing={isProcessing} />
         </div>
-
         <div className="grid md:grid-cols-2 gap-6">
           <div>
             <h2 className="text-xl font-semibold mb-4">Emotion Analysis</h2>
             <EmotionDisplay result={emotionResult} isLoading={isProcessing} />
           </div>
-
           <div>
             <h2 className="text-xl font-semibold mb-4">AI Response</h2>
             <ResponseGenerator 
