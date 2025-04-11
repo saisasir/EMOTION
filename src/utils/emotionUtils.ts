@@ -78,9 +78,9 @@ export const predictEmotion = async (audio: Blob): Promise<EmotionResult> => {
 
     const response = await fetch(`${API_URL}/predict-emotion`, {
       method: 'POST',
-      body: formData,
-      // ⚠️ DO NOT manually set headers like 'Origin' or 'Content-Type'
-      credentials: 'omit'
+      mode: 'cors',               // ✅ Ensures cross-origin request is handled properly
+      credentials: 'include',     // ✅ Sends cookies if needed (safe with CORS setup)
+      body: formData
     });
 
     if (!response.ok) {
