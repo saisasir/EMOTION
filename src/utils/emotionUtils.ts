@@ -2,7 +2,7 @@ export interface EmotionResult {
   emotion: string;
   confidence: number;
   audioResponse?: string;
-  text_response?: string; // ✅ API will return this
+  text_response?: string;
 }
 
 export interface EmotionResponse {
@@ -72,17 +72,15 @@ export const API_URL = import.meta.env.VITE_API_BASE_URL;
 export const predictEmotion = async (audio: Blob): Promise<EmotionResult> => {
   try {
     console.log("📡 Sending audio to API:", API_URL);
+
     const formData = new FormData();
     formData.append('audio_file', audio, 'audio.wav');
 
     const response = await fetch(`${API_URL}/predict-emotion`, {
       method: 'POST',
       body: formData,
-      headers: {
-        // Don't set Content-Type here as FormData will set it with boundary
-        'Origin': window.location.origin
-      },
-      credentials: 'omit' // Don't send cookies to avoid potential CORS issues
+      // ⚠️ DO NOT manually set headers like 'Origin' or 'Content-Type'
+      credentials: 'omit'
     });
 
     if (!response.ok) {
@@ -96,7 +94,7 @@ export const predictEmotion = async (audio: Blob): Promise<EmotionResult> => {
       emotion: data.emotion,
       confidence: data.confidence,
       audioResponse: data.audio_base64,
-      text_response: data.text_response,
+      text_response: data.text_response
     };
   } catch (error) {
     console.error('❌ Error calling API, using mock data:', error);
@@ -112,7 +110,6 @@ export const mockPredictEmotion = async (audio: Blob): Promise<EmotionResult> =>
       const emotion = EMOTIONS[randomIndex];
       const confidence = 70 + Math.random() * 30;
 
-      // Base64 dummy (1-sec silent audio, plays nothing)
       const mockAudioBase64 =
         "UklGRiQAAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YQAAAAA=";
 
